@@ -29,8 +29,9 @@ then
         fi
 fi
 
-# USE_IO is set to 'no' for all boards w/o px4io driver or SYS_USE_IO disabled
-if [ $USE_IO = no -a $AUX_BANK2 = none ]
+# USE_IO is set to 'no' for all boards w/o px4io driver
+# or SYS_USE_IO disabled.
+if [ $USE_IO = no ]
 then
 	set AUX_MODE none
 fi
@@ -110,11 +111,12 @@ then
 	fi
 fi
 
+#
+# Main mixer (1st mixer, MAIN) on primary output device,
+# either PX4IO on a Pixhawk or a 2nd PWM port or CAN
+#
 if [ $MIXER != none -a $MIXER != skip ]
 then
-	#
-	# Load main mixer.
-	#
 	if [ $MIXER_AUX = none -a $USE_IO = yes ]
 	then
 		set MIXER_AUX ${MIXER}
@@ -161,6 +163,10 @@ else
 	fi
 fi
 
+#
+# Auxiliary (2nd mixer, AUX) mixer on bank 1 of e.g. FMU for
+# autopilots that have a single output bank or use IO.
+#
 if [ $MIXER_AUX != none -a $AUX_MODE != none ]
 then
 	#
@@ -223,9 +229,11 @@ then
 			fi
 		fi
 	fi
-fi
-
-if [ $MIXER_AUX != none -a $AUX_MODE = none -a -e $OUTPUT_AUX_DEV ]
+#
+# Auxiliary (2nd mixer, AUX) mixer on bank 2 of e.g. FMU, for devices with > 8 outputs
+# where bank 1 has already been taken by the MAIN mixer.
+#
+elif [ $MIXER_AUX != none -a -e $OUTPUT_AUX_DEV ]
 then
 	#
 	# Load aux mixer.
@@ -255,18 +263,14 @@ then
 	fi
 fi
 
-if [ $OUTPUT_MODE = pwm_out -o $OUTPUT_MODE = io ]
-then
-	if [ $PWM_OUT != none ]
-	then
-		# Set PWM output frequency.
-		if [ $PWM_MAIN_RATE != none ]
-		then
-			pwm rate -c ${PWM_OUT} -r ${PWM_MAIN_RATE}
-		fi
-	fi
-fi
-
+#
+# Auxiliary (3rd mixer, EXTRA) mixer on third output device
+#
+# Load the mixer into an extra device (typically the 3rd device)
+# This is useful for setups with 2x PWM and 1x CAN, where
+# CAN often is the primary, AUX is secondary and EXTRA is a PWM
+# output used for additional payload
+#
 if [ $EXTRA_MIXER_MODE != none ]
 then
 
@@ -299,6 +303,18 @@ then
 		if [ $PWM_EXTRA_RATE != none ]
 		then
 			pwm rate -c ${PWM_EXTRA_OUT} -r ${PWM_EXTRA_RATE}
+		fi
+	fi
+fi
+
+if [ $OUTPUT_MODE = pwm_out -o $OUTPUT_MODE = io ]
+then
+	if [ $PWM_OUT != none ]
+	then
+		# Set PWM output frequency.
+		if [ $PWM_MAIN_RATE != none ]
+		then
+			pwm rate -c ${PWM_OUT} -r ${PWM_MAIN_RATE}
 		fi
 	fi
 fi
