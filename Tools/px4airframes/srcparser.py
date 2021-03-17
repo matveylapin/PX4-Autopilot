@@ -50,6 +50,8 @@ class ParameterGroup(object):
             return "OctoRotorPlus"
         elif (self.name == "Octorotor x"):
             return "OctoRotorX"
+        elif (self.name == "Octoclover"):
+            return "OctoClover"
         elif (self.name == "Octorotor Coaxial"):
             return "OctoRotorXCoaxial"
         elif (self.name == "Octo Coax Wide"):
